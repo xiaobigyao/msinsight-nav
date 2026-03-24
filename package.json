@@ -1,14 +1,26 @@
 {
   "name": "msinsight-nav2",
   "version": "1.0.0",
-  "description": "",
-  "main": "dist/index.js",
+  "description": "MindStudio Insight 智能助手",
   "scripts": {
-    "build": "tsc"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "export": "next build"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "antd": "^6.3.3",
+    "dexie": "^4.3.0",
+    "dexie-react-hooks": "^4.2.0",
+    "next": "^16.2.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
   "devDependencies": {
-    "typescript": "^5.5.3"
+    "typescript": "^5.9.3"
   },
   "private": true
 }
