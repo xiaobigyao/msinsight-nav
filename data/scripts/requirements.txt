@@ -1,0 +1,6 @@
+# Python dependencies for knowledge base building
+# Install with: pip3 install -r requirements.txt
+
+python-dotenv>=1.0.0
+requests>=2.31.0
+numpy>=1.21.0
