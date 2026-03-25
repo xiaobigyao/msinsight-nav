@@ -1,11 +1,11 @@
 # 部署指南
 
-本文档介绍如何使用 **Cloudflare Pages + Next.js API Routes** 部署 MindStudio Insight。
+本文档介绍如何使用 **Vercel** 部署 MindStudio Insight。
 
 ## 架构说明
 
 ```
-用户浏览器 → Cloudflare Pages (Next.js) → SiliconFlow API
+用户浏览器 → Vercel (Next.js) → SiliconFlow API
                      ↑
               API Routes (/api/chat, /api/embeddings)
                      ↑
@@ -13,43 +13,46 @@
 ```
 
 **优势：**
+- ✅ Vercel 是 Next.js 官方平台，完美支持
 - ✅ 一体化部署：前端和 API 在同一个项目中
-- ✅ 免费额度：无限请求、无限带宽
+- ✅ 免费额度充足
 - ✅ API Key 安全存储在服务端
-- ✅ 用户无需配置任何东西
 - ✅ 全球 CDN 加速
+- ✅ 零配置，自动部署
 
 ---
 
-## 部署方式
+## 部署步骤
 
-### 方式 A：通过 Git 集成部署（推荐）
+### 方式 A：通过 Vercel Dashboard 部署（推荐）
 
-#### 1. 连接 Git 仓库
+#### 1. 访问 Vercel
 
-访问：https://dash.cloudflare.com/
+访问：https://vercel.com
 
-#### 2. 创建 Pages 项目
+#### 2. 导入项目
 
-- 点击 "Workers & Pages"
-- 点击 "Create application"
-- 选择 "Pages" 标签
-- 点击 "Connect to Git"
+- 点击 "Add New" → "Project"
+- 选择 "Import Git Repository"
 - 选择你的 GitHub 仓库 `xiaobigyao/msinsight-nav`
+- 点击 "Import"
 
-#### 3. 配置构建设置
+#### 3. 配置项目
+
+Vercel 会自动检测 Next.js 项目，使用默认配置即可：
 
 ```
-Project name: msinsight-nav
-Production branch: main
-Framework preset: Next.js
-Build command: npm run build
-Build output directory: .next
+Project Name: msinsight-nav
+Framework Preset: Next.js
+Root Directory: ./
+Build Command: npm run build
+Output Directory: .next
+Install Command: npm install
 ```
 
 #### 4. 配置环境变量（重要！）
 
-在 "Environment variables" 部分添加：
+在 "Environment Variables" 部分添加：
 
 ```
 Name: SILICONFLOW_API_KEY
@@ -58,39 +61,30 @@ Value: sk-epzsfseecngaefhtpnulbwbypefrovhamwdpnfayituznipi
 
 （替换为你自己的 SiliconFlow API Key）
 
-#### 5. 保存并部署
+#### 5. 部署
 
-点击 "Save and Deploy"，等待 2-3 分钟。
+点击 "Deploy" 按钮，等待 1-2 分钟即可完成部署。
 
 #### 6. 访问网站
 
-部署成功后，Cloudflare 会提供域名：
+部署成功后，Vercel 会提供域名：
 ```
-https://msinsight-nav.pages.dev
+https://msinsight-nav.vercel.app
 ```
 
 ---
 
-### 方式 B：通过命令行部署
+### 方式 B：通过 Vercel CLI 部署
 
 ```bash
-# 1. 安装依赖
-npm install
+# 1. 安装 Vercel CLI
+npm install -g vercel
 
-# 2. 构建项目
-npm run build
+# 2. 登录
+vercel login
 
-# 3. 使用适配器构建
-npx @cloudflare/next-on-pages
-
-# 4. 部署到 Cloudflare Pages
-npx wrangler pages deploy .vercel/output/static --project-name=msinsight-nav
-```
-
-或使用部署脚本：
-
-```bash
-./deploy-cloudflare.sh
+# 3. 部署
+vercel
 ```
 
 ---
@@ -120,7 +114,7 @@ npm run dev
 
 ### 1. 访问网站
 
-打开你的 Cloudflare Pages 域名（如 `https://msinsight-nav.pages.dev`）
+打开你的 Vercel 域名
 
 ### 2. 测试功能
 
@@ -138,44 +132,16 @@ npm run dev
 
 ---
 
-## 常见问题
-
-### Q1: Pages 部署失败
-
-**错误：** `Build failed`
-
-**解决：**
-- 本地运行 `npm run build` 测试
-- 检查 Cloudflare Pages 构建日志
-- 确认 Next.js 版本是 15.x（使用 `npm list next` 查看）
-
-### Q2: API 调用失败
-
-**错误：** `API key not configured`
-
-**解决：**
-- 确认在 Cloudflare Pages 中配置了 `SILICONFLOW_API_KEY` 环境变量
-- 确认 API Key 格式正确（以 `sk-` 开头）
-- 重新部署 Pages 项目
-
-### Q3: 加载知识库很慢
-
-**原因：** 知识库文件约 5.8MB
-
-**解决：**
-- 使用 Cloudflare Pages 部署（已解决，CDN 加速）
-- 或考虑减小知识库大小
-
----
-
 ## 费用说明
 
-### Cloudflare 免费套餐
+### Vercel 免费套餐
 
-**Pages：**
-- 无限带宽
-- 无限请求
-- 500 次构建/月
+**Hobby 计划（免费）：**
+- 100GB 带宽/月
+- 无限项目
+- 自动 HTTPS
+- 全球 CDN
+- 10000 次构建/月
 
 **总费用：完全免费** ✅
 
@@ -188,7 +154,7 @@ npm run dev
 
 ## 更新部署
 
-代码更新后，只需推送到 GitHub，Cloudflare Pages 会自动重新部署：
+代码推送到 GitHub 后，Vercel 会自动重新部署：
 
 ```bash
 git add .
@@ -196,11 +162,44 @@ git commit -m "feat: xxx"
 git push origin main
 ```
 
+无需任何手动操作！
+
+---
+
+## 常见问题
+
+### Q1: 部署失败
+
+**错误：** `Build failed`
+
+**解决：**
+- 本地运行 `npm run build` 测试
+- 检查 Vercel 构建日志
+- 确认 Node.js 版本（建议 18.x 或 20.x）
+
+### Q2: API 调用失败
+
+**错误：** `API key not configured`
+
+**解决：**
+- 确认在 Vercel 项目设置中配置了 `SILICONFLOW_API_KEY` 环境变量
+- 确认 API Key 格式正确（以 `sk-` 开头）
+- 重新部署项目
+
+### Q3: 如何添加自定义域名？
+
+在 Vercel Dashboard：
+1. 进入项目设置
+2. 点击 "Domains"
+3. 添加你的域名
+4. 配置 DNS 记录
+
 ---
 
 ## 技术支持
 
 如有问题，请检查：
-1. Cloudflare Dashboard 中的日志
+1. Vercel Dashboard 中的部署日志
 2. 浏览器控制台的错误信息
 3. 环境变量是否正确配置
+
