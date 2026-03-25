@@ -9,10 +9,15 @@ interface SiliconFlowStreamOptions {
   onError: (error: Error) => void;
 }
 
+interface ApiConfig {
+  url: string;
+  headers: Record<string, string>;
+}
+
 /**
  * 获取 API 配置
  */
-function getApiConfig() {
+function getApiConfig(): ApiConfig {
   if (API_CONFIG.USE_WORKER) {
     console.log('✅ 使用 Worker API:', API_CONFIG.WORKER_URL);
     return {
