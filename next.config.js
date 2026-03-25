@@ -1,15 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 启用静态导出
-  output: 'export',
+  // 移除 output: 'export' 以支持 API Routes
+  // Vercel 会自动处理 Next.js 的服务端渲染和 API Routes
 
   // 图片优化
   images: {
     unoptimized: true,
   },
-
-  // Turbopack 配置（Next.js 16+ 默认）
-  turbopack: {},
 };
 
 module.exports = nextConfig;
