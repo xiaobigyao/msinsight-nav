@@ -1,11 +1,41 @@
 // SiliconFlow API 客户端 - 多模态模型
 
 import type { ScreenshotAnalysis } from '@/types';
+import { API_CONFIG } from './config';
 
 interface SiliconFlowStreamOptions {
   onDelta: (chunk: string) => void;
   onComplete: (fullResponse: string) => void;
   onError: (error: Error) => void;
+}
+
+/**
+ * 获取 API 配置
+ */
+function getApiConfig() {
+  if (API_CONFIG.USE_WORKER) {
+    console.log('✅ 使用 Worker API:', API_CONFIG.WORKER_URL);
+    return {
+      url: `${API_CONFIG.WORKER_URL}/api/chat`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+  }
+
+  // 开发环境：使用环境变量中的 API Key
+  if (!API_CONFIG.API_KEY) {
+    throw new Error('请配置 NEXT_PUBLIC_WORKER_URL 或 NEXT_PUBLIC_API_KEY 环境变量');
+  }
+
+  console.log('✅ 使用直连模式（开发环境）');
+  return {
+    url: 'https://api.siliconflow.cn/v1/chat/completions',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_CONFIG.API_KEY}`,
+    },
+  };
 }
 
 /**
@@ -16,29 +46,16 @@ export async function analyzeScreenshot(
   prompt: string,
   options: SiliconFlowStreamOptions
 ): Promise<void> {
-  // 从 localStorage 获取 API Key
-  const getApiKey = () => {
-    const prefs = JSON.parse(localStorage.getItem('preferences') || '{}');
-    return prefs.siliconflowApiKey;
-  };
+  const apiConfig = getApiConfig();
 
-  const apiKey = getApiKey();
-
-  if (!apiKey) {
-    throw new Error('请先在设置中配置硅基流动 API Key');
-  }
-
-  console.log('🚀 开始调用 SiliconFlow API...');
+  console.log('🚀 开始调用 API...');
   console.log('📝 Prompt 长度:', prompt.length);
   console.log('🖼️ 图片大小:', imageBase64.length, '字符');
 
   try {
-    const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+    const response = await fetch(apiConfig.url, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
+      headers: apiConfig.headers,
       body: JSON.stringify({
         model: 'Pro/moonshotai/Kimi-K2.5',
         messages: [
@@ -166,24 +183,12 @@ export async function chat(
   messages: Array<{ role: string; content: string }>,
   options: SiliconFlowStreamOptions
 ): Promise<void> {
-  const getApiKey = () => {
-    const prefs = JSON.parse(localStorage.getItem('preferences') || '{}');
-    return prefs.siliconflowApiKey;
-  };
-
-  const apiKey = getApiKey();
-
-  if (!apiKey) {
-    throw new Error('请先在设置中配置硅基流动 API Key');
-  }
+  const apiConfig = getApiConfig();
 
   try {
-    const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+    const response = await fetch(apiConfig.url, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
+      headers: apiConfig.headers,
       body: JSON.stringify({
         model: 'Pro/moonshotai/Kimi-K2.5',
         messages,

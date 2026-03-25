@@ -21,6 +21,7 @@ export default function SettingsModal({ open, onClose, onConfigured }: SettingsM
       // 加载当前配置
       const prefs = preferencesManager.getPreferences();
       form.setFieldsValue({
+        workerUrl: prefs.workerUrl || '',
         siliconflowApiKey: prefs.siliconflowApiKey || '',
       });
     }
@@ -31,10 +32,21 @@ export default function SettingsModal({ open, onClose, onConfigured }: SettingsM
       setLoading(true);
       const values = await form.validateFields();
 
-      // 保存配置
-      preferencesManager.setApiKey(values.siliconflowApiKey);
+      // 验证至少配置一个
+      if (!values.workerUrl && !values.siliconflowApiKey) {
+        message.error('请至少配置 Worker URL 或 API Key 其中一项');
+        return;
+      }
 
-      message.success('API Key 配置成功！');
+      // 保存配置
+      if (values.workerUrl) {
+        preferencesManager.setWorkerUrl(values.workerUrl.trim());
+      }
+      if (values.siliconflowApiKey) {
+        preferencesManager.setApiKey(values.siliconflowApiKey.trim());
+      }
+
+      message.success('配置成功！');
 
       // 触发配置完成回调
       if (onConfigured) {
