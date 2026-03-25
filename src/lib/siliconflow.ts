@@ -18,23 +18,12 @@ interface ApiConfig {
  * 获取 API 配置
  */
 function getApiConfig(): ApiConfig {
-  // 生产环境：使用 Next.js API Routes
-  if (!API_CONFIG.USE_DIRECT) {
-    console.log('✅ 使用 Next.js API Routes:', API_CONFIG.API_BASE);
-    return {
-      url: `${API_CONFIG.API_BASE}/chat`,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-  }
-
-  // 开发环境：使用环境变量中的 API Key 直连
+  // 使用环境变量中的 API Key 直连 SiliconFlow API
   if (!API_CONFIG.API_KEY) {
-    throw new Error('请配置 NEXT_PUBLIC_API_KEY 环境变量（开发环境）');
+    throw new Error('请配置 NEXT_PUBLIC_API_KEY 环境变量');
   }
 
-  console.log('✅ 使用直连模式（开发环境）');
+  console.log('✅ 使用直连模式调用 SiliconFlow API');
   return {
     url: 'https://api.siliconflow.cn/v1/chat/completions',
     headers: {

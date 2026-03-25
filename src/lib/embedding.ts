@@ -8,37 +8,12 @@ import { cosineSimilarity } from './knowledge';
  * API 文档：https://docs.siliconflow.cn/
  */
 export async function embedQuery(text: string): Promise<Float32Array> {
-  // 生产环境：使用 Next.js API Routes
-  if (!API_CONFIG.USE_DIRECT) {
-    console.log('✅ 使用 API Routes 生成嵌入');
-    const response = await fetch(`${API_CONFIG.API_BASE}/embeddings`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'BAAI/bge-m3',
-        input: text,
-        encoding_format: 'float',
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Embeddings API error (${response.status}): ${errorText}`);
-    }
-
-    const data = await response.json();
-    const embedding = data.data[0].embedding;
-    return normalize(new Float32Array(embedding));
-  }
-
-  // 开发环境：直连 SiliconFlow API
+  // 使用环境变量中的 API Key 直连 SiliconFlow API
   if (!API_CONFIG.API_KEY) {
     throw new Error('请配置 NEXT_PUBLIC_API_KEY 环境变量');
   }
 
-  console.log('✅ 使用直连模式生成嵌入');
+  console.log('✅ 生成嵌入向量');
   const response = await fetch('https://api.siliconflow.cn/v1/embeddings', {
     method: 'POST',
     headers: {

@@ -1,18 +1,13 @@
 /**
  * API 配置
  *
- * 使用 Next.js API Routes 部署在 Cloudflare Pages
- * - 生产环境：使用 Next.js API Routes（/api/chat, /api/embeddings）
- * - 开发环境：可选择性直连 SiliconFlow API
+ * 本地开发模式：使用 NEXT_PUBLIC_API_KEY 直连 SiliconFlow API
  */
 
 export const API_CONFIG = {
-  // Next.js API Routes 基础路径（相对路径）
-  API_BASE: '/api',
-
-  // SiliconFlow API Key（可选，仅开发环境直连使用）
+  // SiliconFlow API Key（从环境变量获取）
   API_KEY: process.env.NEXT_PUBLIC_API_KEY || '',
 
-  // 是否使用直连模式（仅开发环境）
-  USE_DIRECT: !!process.env.NEXT_PUBLIC_API_KEY,
+  // 是否配置了 API Key
+  HAS_API_KEY: !!process.env.NEXT_PUBLIC_API_KEY,
 };

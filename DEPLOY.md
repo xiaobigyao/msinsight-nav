@@ -1,205 +1,135 @@
-# 部署指南
+# 本地开发指南
 
-本文档介绍如何使用 **Vercel** 部署 MindStudio Insight。
+本文档介绍如何在本地运行 MindStudio Insight。
 
-## 架构说明
+## 环境要求
 
-```
-用户浏览器 → Vercel (Next.js) → SiliconFlow API
-                     ↑
-              API Routes (/api/chat, /api/embeddings)
-                     ↑
-              环境变量（API Key）
-```
-
-**优势：**
-- ✅ Vercel 是 Next.js 官方平台，完美支持
-- ✅ 一体化部署：前端和 API 在同一个项目中
-- ✅ 免费额度充足
-- ✅ API Key 安全存储在服务端
-- ✅ 全球 CDN 加速
-- ✅ 零配置，自动部署
+- Node.js 18.x 或更高版本
+- npm 或 yarn
 
 ---
 
-## 部署步骤
+## 安装与运行
 
-### 方式 A：通过 Vercel Dashboard 部署（推荐）
-
-#### 1. 访问 Vercel
-
-访问：https://vercel.com
-
-#### 2. 导入项目
-
-- 点击 "Add New" → "Project"
-- 选择 "Import Git Repository"
-- 选择你的 GitHub 仓库 `xiaobigyao/msinsight-nav`
-- 点击 "Import"
-
-#### 3. 配置项目
-
-Vercel 会自动检测 Next.js 项目，使用默认配置即可：
-
-```
-Project Name: msinsight-nav
-Framework Preset: Next.js
-Root Directory: ./
-Build Command: npm run build
-Output Directory: .next
-Install Command: npm install
-```
-
-#### 4. 配置环境变量（重要！）
-
-在 "Environment Variables" 部分添加：
-
-```
-Name: SILICONFLOW_API_KEY
-Value: sk-epzsfseecngaefhtpnulbwbypefrovhamwdpnfayituznipi
-```
-
-（替换为你自己的 SiliconFlow API Key）
-
-#### 5. 部署
-
-点击 "Deploy" 按钮，等待 1-2 分钟即可完成部署。
-
-#### 6. 访问网站
-
-部署成功后，Vercel 会提供域名：
-```
-https://msinsight-nav.vercel.app
-```
-
----
-
-### 方式 B：通过 Vercel CLI 部署
+### 1. 安装依赖
 
 ```bash
-# 1. 安装 Vercel CLI
-npm install -g vercel
-
-# 2. 登录
-vercel login
-
-# 3. 部署
-vercel
+npm install
 ```
 
----
-
-## 本地开发
-
-### 配置环境变量
+### 2. 配置环境变量
 
 创建 `.env.local` 文件：
 
 ```bash
-# 本地开发：直连 SiliconFlow API
+# SiliconFlow API Key（从 https://cloud.siliconflow.cn/account/ak 获取）
 NEXT_PUBLIC_API_KEY=sk-xxxxxxxxxxxxx
 ```
 
-### 运行开发服务器
+### 3. 启动开发服务器
 
 ```bash
 npm run dev
 ```
 
-访问 http://localhost:3000
+访问：http://localhost:3000
 
 ---
 
-## 验证部署
+## 项目结构
 
-### 1. 访问网站
-
-打开你的 Vercel 域名
-
-### 2. 测试功能
-
-- 上传或粘贴一张 MindStudio Insight 截图
-- 输入问题，例如："分析一下性能瓶颈"
-- 查看是否正常返回分析结果
-
-### 3. 检查控制台
-
-打开浏览器控制台（F12），应该看到：
 ```
-✅ 使用 Next.js API Routes: /api
-🚀 开始调用 API...
+msinsight-nav2/
+├── src/
+│   ├── app/
+│   │   ├── api/          # Next.js API Routes
+│   │   │   ├── chat/     # 聊天 API
+│   │   │   └── embeddings/ # 嵌入 API
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── globals.css
+│   ├── components/       # React 组件
+│   ├── lib/             # 工具函数和 API 客户端
+│   └── types/           # TypeScript 类型定义
+├── data/                # 知识库数据
+├── public/              # 静态资源
+└── .env.local          # 环境变量（本地开发，不提交到 Git）
 ```
 
 ---
 
-## 费用说明
+## API Routes
 
-### Vercel 免费套餐
+项目包含两个 API 端点：
 
-**Hobby 计划（免费）：**
-- 100GB 带宽/月
-- 无限项目
-- 自动 HTTPS
-- 全球 CDN
-- 10000 次构建/月
+### `/api/chat`
+处理聊天请求，转发到 SiliconFlow Kimi-K2.5 API
 
-**总费用：完全免费** ✅
-
-### SiliconFlow API 费用
-
-- Kimi-K2.5：按 token 计费
-- 具体价格：https://cloud.siliconflow.cn/price
+### `/api/embeddings`
+处理嵌入请求，转发到 SiliconFlow BGE-M3 API
 
 ---
 
-## 更新部署
+## 本地开发模式
 
-代码推送到 GitHub 后，Vercel 会自动重新部署：
+### 直连模式（推荐）
+
+使用 `.env.local` 中的 `NEXT_PUBLIC_API_KEY` 直接调用 SiliconFlow API：
 
 ```bash
-git add .
-git commit -m "feat: xxx"
-git push origin main
+NEXT_PUBLIC_API_KEY=sk-xxxxxxxxxxxxx
+npm run dev
 ```
 
-无需任何手动操作！
+**优点：**
+- 简单直接，无需后端服务
+- 适合开发和调试
+
+**缺点：**
+- API Key 暴露在客户端（仅用于本地开发）
+
+---
+
+## 构建生产版本
+
+```bash
+npm run build
+npm start
+```
 
 ---
 
 ## 常见问题
 
-### Q1: 部署失败
+### Q1: 如何获取 SiliconFlow API Key？
 
-**错误：** `Build failed`
+访问：https://cloud.siliconflow.cn/account/ak
 
-**解决：**
-- 本地运行 `npm run build` 测试
-- 检查 Vercel 构建日志
-- 确认 Node.js 版本（建议 18.x 或 20.x）
+### Q2: 本地开发时 API 调用失败
 
-### Q2: API 调用失败
+检查：
+1. `.env.local` 文件是否存在
+2. API Key 是否正确
+3. 是否重启了开发服务器（修改 .env.local 后需要重启）
 
-**错误：** `API key not configured`
+### Q3: 图片上传失败
 
-**解决：**
-- 确认在 Vercel 项目设置中配置了 `SILICONFLOW_API_KEY` 环境变量
-- 确认 API Key 格式正确（以 `sk-` 开头）
-- 重新部署项目
-
-### Q3: 如何添加自定义域名？
-
-在 Vercel Dashboard：
-1. 进入项目设置
-2. 点击 "Domains"
-3. 添加你的域名
-4. 配置 DNS 记录
+检查：
+1. 图片大小是否过大（建议 < 10MB）
+2. 浏览器控制台是否有错误信息
 
 ---
 
-## 技术支持
+## 技术栈
 
-如有问题，请检查：
-1. Vercel Dashboard 中的部署日志
-2. 浏览器控制台的错误信息
-3. 环境变量是否正确配置
+- **框架**: Next.js 16.2.1
+- **UI**: Ant Design 6.3.3
+- **语言**: TypeScript 5.9.3
+- **AI**: SiliconFlow Kimi-K2.5
+- **向量**: BGE-M3 嵌入模型
 
+---
+
+## 许可证
+
+MIT
