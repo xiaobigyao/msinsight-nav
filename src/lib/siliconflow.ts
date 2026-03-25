@@ -101,9 +101,9 @@ export async function analyzeScreenshot(
     const decoder = new TextDecoder();
     let fullContent = '';
     let chunkCount = 0;
-    const maxChunks = 1000; // 最多接收 1000 个数据块（防止无限循环）
+    const maxChunks = 5000; // 增加到 5000 个数据块
     const startTime = Date.now();
-    const timeout = 120000; // 120 秒超时
+    const timeout = 300000; // 增加到 300 秒（5分钟）超时
 
     while (true) {
       // 检查超时
