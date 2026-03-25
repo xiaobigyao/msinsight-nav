@@ -18,19 +18,20 @@ interface ApiConfig {
  * 获取 API 配置
  */
 function getApiConfig(): ApiConfig {
-  if (API_CONFIG.USE_WORKER) {
-    console.log('✅ 使用 Worker API:', API_CONFIG.WORKER_URL);
+  // 生产环境：使用 Next.js API Routes
+  if (!API_CONFIG.USE_DIRECT) {
+    console.log('✅ 使用 Next.js API Routes:', API_CONFIG.API_BASE);
     return {
-      url: `${API_CONFIG.WORKER_URL}/api/chat`,
+      url: `${API_CONFIG.API_BASE}/chat`,
       headers: {
         'Content-Type': 'application/json',
       },
     };
   }
 
-  // 开发环境：使用环境变量中的 API Key
+  // 开发环境：使用环境变量中的 API Key 直连
   if (!API_CONFIG.API_KEY) {
-    throw new Error('请配置 NEXT_PUBLIC_WORKER_URL 或 NEXT_PUBLIC_API_KEY 环境变量');
+    throw new Error('请配置 NEXT_PUBLIC_API_KEY 环境变量（开发环境）');
   }
 
   console.log('✅ 使用直连模式（开发环境）');

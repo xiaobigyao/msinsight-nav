@@ -1,5 +1,6 @@
 // Embedding API - 硅基流动 BGE-M3
 
+import { API_CONFIG } from './config';
 import { cosineSimilarity } from './knowledge';
 
 /**
@@ -7,26 +8,45 @@ import { cosineSimilarity } from './knowledge';
  * API 文档：https://docs.siliconflow.cn/
  */
 export async function embedQuery(text: string): Promise<Float32Array> {
-  // 从 localStorage 获取 API Key
-  const getApiKey = () => {
-    const prefs = JSON.parse(localStorage.getItem('preferences') || '{}');
-    return prefs.siliconflowApiKey;
-  };
+  // 生产环境：使用 Next.js API Routes
+  if (!API_CONFIG.USE_DIRECT) {
+    console.log('✅ 使用 API Routes 生成嵌入');
+    const response = await fetch(`${API_CONFIG.API_BASE}/embeddings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'BAAI/bge-m3',
+        input: text,
+        encoding_format: 'float',
+      }),
+    });
 
-  const apiKey = getApiKey();
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Embeddings API error (${response.status}): ${errorText}`);
+    }
 
-  if (!apiKey) {
-    throw new Error('请先在设置中配置硅基流动 API Key');
+    const data = await response.json();
+    const embedding = data.data[0].embedding;
+    return normalize(new Float32Array(embedding));
   }
 
+  // 开发环境：直连 SiliconFlow API
+  if (!API_CONFIG.API_KEY) {
+    throw new Error('请配置 NEXT_PUBLIC_API_KEY 环境变量');
+  }
+
+  console.log('✅ 使用直连模式生成嵌入');
   const response = await fetch('https://api.siliconflow.cn/v1/embeddings', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${API_CONFIG.API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'BAAI/bge-m3', // BGE-M3 模型
+      model: 'BAAI/bge-m3',
       input: text,
       encoding_format: 'float',
     }),
