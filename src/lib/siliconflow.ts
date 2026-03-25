@@ -63,7 +63,7 @@ export async function analyzeScreenshot(
           },
         ],
         stream: true,
-        temperature: 0.7,
+        temperature: 0.3,
         max_tokens: 8192,
       }),
     });
@@ -188,7 +188,7 @@ export async function chat(
         model: 'Pro/moonshotai/Kimi-K2.5',
         messages,
         stream: true,
-        temperature: 0.7,
+        temperature: 0.3,
         max_tokens: 4000,
       }),
     });
