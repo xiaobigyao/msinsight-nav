@@ -1,8 +1,4 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "framework": "nextjs",
-  "env": {
-    "SILICONFLOW_API_KEY": "@siliconflow-api-key"
-  }
+  "framework": "nextjs"
 }
