@@ -1,23 +1,18 @@
-// Embedding API - 硅基流动 BGE-M3
+// Embedding API - 通过 API Routes 调用（安全）
 
-import { API_CONFIG } from './config';
 import { cosineSimilarity } from './knowledge';
 
 /**
- * 使用硅基流动 BGE-M3 生成查询向量
+ * 使用硅基流动 BGE-M3 生成查询向量（通过 API Routes）
  * API 文档：https://docs.siliconflow.cn/
  */
 export async function embedQuery(text: string): Promise<Float32Array> {
-  // 使用环境变量中的 API Key 直连 SiliconFlow API
-  if (!API_CONFIG.API_KEY) {
-    throw new Error('请配置 NEXT_PUBLIC_API_KEY 环境变量');
-  }
+  console.log('✅ 通过 API Route 生成嵌入向量');
 
-  console.log('✅ 生成嵌入向量');
-  const response = await fetch('https://api.siliconflow.cn/v1/embeddings', {
+  // 调用自己的 API Route（服务端会安全地调用 SiliconFlow）
+  const response = await fetch('/api/embeddings', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${API_CONFIG.API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -29,7 +24,7 @@ export async function embedQuery(text: string): Promise<Float32Array> {
 
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error('硅基流动 API Key 无效，请检查配置');
+      throw new Error('硅基流动 API Key 无效，请联系管理员');
     } else if (response.status === 429) {
       throw new Error('请求过快，请稍后再试');
     } else {

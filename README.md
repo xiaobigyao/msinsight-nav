@@ -46,7 +46,7 @@ npm run dev
 创建 `.env.local` 文件：
 
 ```bash
-# SiliconFlow API Key（从 https://cloud.siliconflow.cn/account/ak 获取）
+# SiliconFlow API Key（服务端使用，安全）
 SILICONFLOW_API_KEY=your-api-key-here
 ```
 
@@ -55,6 +55,11 @@ SILICONFLOW_API_KEY=your-api-key-here
 2. 注册/登录账号
 3. 创建新的 API Key
 4. 复制 API Key 到 `.env.local` 文件
+
+**安全说明**：
+- ✅ API Key 只在服务端使用，不会暴露给客户端
+- ✅ 所有 API 调用都通过 API Routes（服务端）转发
+- ✅ 客户端代码无法访问 API Key
 
 ## 🛠️ 技术栈
 

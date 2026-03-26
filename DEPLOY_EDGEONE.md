@@ -46,6 +46,11 @@ SILICONFLOW_API_KEY=sk-xxxxxxxxxxxxx
 
 > 替换 `sk-xxxxxxxxxxxxx` 为你从 SiliconFlow 获取的真实 API Key
 
+**安全说明**：
+- ✅ `SILICONFLOW_API_KEY` 只在服务端使用，不会暴露给客户端
+- ✅ 所有 API 调用都通过 API Routes（服务端）转发
+- ✅ 客户端代码无法访问此 API Key，完全安全！
+
 ### 7. 开始部署
 
 点击「部署」按钮，等待构建完成（通常 1-2 分钟）
@@ -73,6 +78,7 @@ SILICONFLOW_API_KEY=sk-xxxxxxxxxxxxx
 1. `SILICONFLOW_API_KEY` 已在环境变量中配置
 2. API Key 格式正确（以 `sk-` 开头）
 3. API Key 有足够的额度
+4. 环境变量名称是 `SILICONFLOW_API_KEY`（不是 `NEXT_PUBLIC_API_KEY`）
 
 ### 如何更新代码？
 

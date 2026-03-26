@@ -1,7 +1,6 @@
-// SiliconFlow API 客户端 - 多模态模型
+// SiliconFlow API 客户端 - 通过 API Routes 调用（安全）
 
 import type { ScreenshotAnalysis } from '@/types';
-import { API_CONFIG } from './config';
 
 interface SiliconFlowStreamOptions {
   onDelta: (chunk: string) => void;
@@ -9,71 +8,38 @@ interface SiliconFlowStreamOptions {
   onError: (error: Error) => void;
 }
 
-interface ApiConfig {
-  url: string;
-  headers: Record<string, string>;
-}
-
 /**
- * 获取 API 配置
- */
-function getApiConfig(): ApiConfig {
-  // 使用环境变量中的 API Key 直连 SiliconFlow API
-  if (!API_CONFIG.API_KEY) {
-    throw new Error('请配置 NEXT_PUBLIC_API_KEY 环境变量');
-  }
-
-  console.log('✅ 使用直连模式调用 SiliconFlow API');
-  return {
-    url: 'https://api.siliconflow.cn/v1/chat/completions',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${API_CONFIG.API_KEY}`,
-    },
-  };
-}
-
-/**
- * 调用 SiliconFlow Kimi-K2.5 进行截图分析（流式）
+ * 调用 SiliconFlow Kimi-K2.5 进行截图分析（通过 API Routes，安全）
  */
 export async function analyzeScreenshot(
   imageBase64: string,
   prompt: string,
   options: SiliconFlowStreamOptions
 ): Promise<void> {
-  const apiConfig = getApiConfig();
-
-  console.log('🚀 开始调用 API...');
+  console.log('🚀 通过 API Route 调用截图分析...');
   console.log('📝 Prompt 长度:', prompt.length);
   console.log('🖼️ 图片大小:', imageBase64.length, '字符');
 
   try {
-    const response = await fetch(apiConfig.url, {
+    // 调用自己的 API Route（服务端会安全地调用 SiliconFlow）
+    const response = await fetch('/api/analyze', {
       method: 'POST',
-      headers: apiConfig.headers,
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
+        imageBase64,
+        prompt,
         model: 'Pro/moonshotai/Kimi-K2.5',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'image_url', image_url: { url: imageBase64 } },
-              { type: 'text', text: prompt },
-            ],
-          },
-        ],
-        stream: true,
-        temperature: 0.3,
-        max_tokens: 8192,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ API 响应错误:', response.status, errorText);
+      console.error('❌ API Route 响应错误:', response.status, errorText);
 
       if (response.status === 401) {
-        throw new Error('硅基流动 API Key 无效，请检查配置');
+        throw new Error('硅基流动 API Key 无效，请联系管理员');
       } else if (response.status === 429) {
         throw new Error('请求过快，请稍后再试');
       } else if (response.status === 400) {
@@ -83,7 +49,7 @@ export async function analyzeScreenshot(
       }
     }
 
-    console.log('✅ API 响应成功，开始处理流式数据...');
+    console.log('✅ API Route 响应成功，开始处理流式数据...');
 
     // 处理流式响应
     const reader = response.body!.getReader();
@@ -172,21 +138,24 @@ export async function analyzeScreenshot(
 }
 
 /**
- * 调用 SiliconFlow Kimi-K2.5 进行对话（流式）
+ * 调用 SiliconFlow Kimi-K2.5 进行对话（通过 API Routes，安全）
  */
 export async function chat(
   messages: Array<{ role: string; content: string }>,
   options: SiliconFlowStreamOptions
 ): Promise<void> {
-  const apiConfig = getApiConfig();
+  console.log('🚀 通过 API Route 调用聊天...');
 
   try {
-    const response = await fetch(apiConfig.url, {
+    // 调用自己的 API Route（服务端会安全地调用 SiliconFlow）
+    const response = await fetch('/api/chat', {
       method: 'POST',
-      headers: apiConfig.headers,
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        model: 'Pro/moonshotai/Kimi-K2.5',
         messages,
+        model: 'Pro/moonshotai/Kimi-K2.5',
         stream: true,
         temperature: 0.3,
         max_tokens: 4000,
