@@ -13,7 +13,8 @@ import type { ScreenshotAnalysis, TuningState } from '@/types';
 export async function analyzeScreenshot(
   screenshotId: string,
   imageBase64: string,
-  userQuery?: string
+  userQuery?: string,
+  userMessage?: any
 ): Promise<void> {
   console.log('🔍 开始分析截图...');
   if (userQuery) {
@@ -23,6 +24,19 @@ export async function analyzeScreenshot(
   // 1. 加载当前会话
   const session = await sessionManager.getCurrentSession();
   const history = session.messages.slice(-10);
+
+  // 2. 如果提供了用户消息，先保存到数据库
+  if (userMessage) {
+    await sessionManager.appendMessage(session.sessionId, userMessage);
+    console.log('💾 已保存用户消息到数据库');
+
+    // 通知 UI 重新加载会话（显示用户消息）
+    window.dispatchEvent(
+      new CustomEvent('session:updated', {
+        detail: { sessionId: session.sessionId },
+      })
+    );
+  }
 
   // 2. 提取关键词用于知识库检索
   // 如果用户有问题，结合用户问题和截图提取关键词

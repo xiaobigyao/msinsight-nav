@@ -19,8 +19,24 @@ export default function ChatInterface() {
   const [pendingScreenshot, setPendingScreenshot] = useState<string | null>(null);
 
   // 加载当前会话
+  const loadCurrentSession = async () => {
+    try {
+      const session = await sessionManager.getCurrentSession();
+      setCurrentSessionId(session.sessionId);
+      setMessages(session.messages);
+    } catch (error) {
+      console.error('加载会话失败:', error);
+      message.error('加载会话失败');
+    }
+  };
+
   useEffect(() => {
     loadCurrentSession();
+
+    // 监听会话创建事件
+    const handleSessionCreated = () => {
+      loadCurrentSession();
+    };
 
     // 监听消息更新事件
     const handleMessageUpdate = ((e: CustomEvent) => {
@@ -114,6 +130,7 @@ export default function ChatInterface() {
     window.addEventListener('analysis:complete', handleAnalysisComplete);
     window.addEventListener('message:formatted', handleMessageFormatted);
     window.addEventListener('session:updated', handleSessionUpdated);
+    window.addEventListener('sessionCreated', handleSessionCreated);
     document.addEventListener('paste', handlePaste);
 
     return () => {
@@ -121,20 +138,10 @@ export default function ChatInterface() {
       window.removeEventListener('analysis:complete', handleAnalysisComplete);
       window.removeEventListener('message:formatted', handleMessageFormatted);
       window.removeEventListener('session:updated', handleSessionUpdated);
+      window.removeEventListener('sessionCreated', handleSessionCreated);
       document.removeEventListener('paste', handlePaste);
     };
   }, []);
-
-  const loadCurrentSession = async () => {
-    try {
-      const session = await sessionManager.getCurrentSession();
-      setCurrentSessionId(session.sessionId);
-      setMessages(session.messages);
-    } catch (error) {
-      console.error('加载会话失败:', error);
-      message.error('加载会话失败');
-    }
-  };
 
   // 发送消息（文本或截图+文本）
   const handleSendMessage = async () => {
@@ -167,27 +174,25 @@ export default function ChatInterface() {
       ];
     }
 
-    // 添加到界面
-    setMessages((prev) => [...prev, userMessage]);
-    const content = inputValue;
-    setInputValue('');
-
     // 清空待发送的截图
     const screenshotToAnalyze = pendingScreenshot;
     setPendingScreenshot(null);
+    const content = inputValue;
+    setInputValue('');
 
     try {
-      // 保存到 IndexedDB
-      if (currentSessionId) {
-        await sessionManager.appendMessage(currentSessionId, userMessage);
-      }
-
-      // 如果有截图，调用截图分析
+      // 如果有截图，调用截图分析（会自动保存用户消息）
       if (screenshotToAnalyze) {
         setAnalyzing(true);
         const screenshotId = userMessage.attachments?.[0]?.id || crypto.randomUUID();
-        await analyzeScreenshot(screenshotId, screenshotToAnalyze, content);
+        // 不在这里添加到界面，让 analyzeScreenshot 处理
+        await analyzeScreenshot(screenshotId, screenshotToAnalyze, content, userMessage);
       } else {
+        // 纯文本消息，直接保存并添加到界面
+        if (currentSessionId) {
+          await sessionManager.appendMessage(currentSessionId, userMessage);
+        }
+        setMessages((prev) => [...prev, userMessage]);
         // TODO: 纯文本聊天
         // 暂时显示占位响应
         setTimeout(() => {
@@ -236,78 +241,58 @@ export default function ChatInterface() {
     reader.readAsDataURL(fileObj);
   };
 
-  // 新建会话
-  const handleNewSession = async () => {
-    try {
-      const newSessionId = await sessionManager.createSession();
-      // 更新 localStorage 中的当前会话 ID
-      localStorage.setItem('currentSessionId', newSessionId);
-      setCurrentSessionId(newSessionId);
-      setMessages([]);
-      message.success('已创建新会话');
-    } catch (error) {
-      console.error('创建会话失败:', error);
-      message.error('创建会话失败');
-    }
-  };
-
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px' }}>
-      {/* 工具栏 */}
-      <Card style={{ marginBottom: 16 }}>
-        <Space>
-          <Button icon={<PlusOutlined />} onClick={handleNewSession}>
-            新建会话
-          </Button>
+    <div style={{ width: '100%', maxWidth: 1000, margin: '0 auto' }}>
+      {/* 消息列表 - 极简纯白风格 */}
+      <Card
+        style={{
+          minHeight: 400,
+          maxHeight: 'calc(100vh - 250px)',
+          overflowY: 'auto',
+          marginBottom: 32,
+          padding: messages.length === 0 ? 0 : 32,
+        }}
+      >
+        {messages.length === 0 ? (
           <Upload
             customRequest={handleUploadScreenshot}
             showUploadList={false}
             accept="image/*"
             disabled={analyzing}
+            style={{ width: '100%', height: '100%' }}
           >
-            <Button
-              icon={<CameraOutlined />}
-              loading={analyzing}
-              disabled={analyzing}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: 400,
+                color: '#8A8A8A',
+                cursor: analyzing ? 'not-allowed' : 'pointer',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                if (!analyzing) {
+                  e.currentTarget.style.opacity = '0.7';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '1';
+              }}
             >
-              {analyzing ? '分析中...' : '上传截图'}
-            </Button>
+              <UploadOutlined style={{ fontSize: 64, marginBottom: 24, color: '#B8B8B8' }} />
+              <p style={{ fontSize: 16, fontWeight: 500, color: '#1A1A1A', marginBottom: 8 }}>
+                上传 MindStudio Insight 截图开始分析
+              </p>
+              <p style={{ fontSize: 13, color: '#8A8A8A', marginBottom: 4 }}>
+                支持 PNG、JPG 等格式，最大 5MB
+              </p>
+              <p style={{ fontSize: 13, color: '#8A8A8A', marginTop: 12 }}>
+                也可以直接按 Ctrl+V (Mac: ⌘+V) 粘贴截图
+              </p>
+            </div>
           </Upload>
-        </Space>
-      </Card>
-
-      {/* 消息列表 */}
-      <div
-        style={{
-          background: '#fff',
-          borderRadius: 8,
-          border: '1px solid #f0f0f0',
-          minHeight: 500,
-          maxHeight: 'calc(100vh - 250px)',
-          overflowY: 'auto',
-          padding: 16,
-        }}
-      >
-        {messages.length === 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: 400,
-              color: '#8c8c8c',
-            }}
-          >
-            <UploadOutlined style={{ fontSize: 64, marginBottom: 16 }} />
-            <p>上传 MindStudio Insight 截图开始分析</p>
-            <p style={{ fontSize: 14 }}>
-              支持 PNG、JPG 等格式，最大 5MB
-            </p>
-            <p style={{ fontSize: 13, color: '#1890ff', marginTop: 8 }}>
-              💡 也可以直接按 Ctrl+V (Mac: ⌘+V) 粘贴截图
-            </p>
-          </div>
         ) : (
           messages.map((msg) => (
             <MessageBubble key={msg.id} message={msg} />
@@ -315,28 +300,29 @@ export default function ChatInterface() {
         )}
 
         {analyzing && (
-          <div style={{ textAlign: 'center', padding: 20 }}>
+          <div style={{ textAlign: 'center', padding: 40 }}>
             <Spin size="large" />
-            <p style={{ marginTop: 16, color: '#8c8c8c' }}>
+            <p style={{ marginTop: 24, color: '#8A8A8A', fontWeight: 400 }}>
               AI 正在分析截图...
             </p>
           </div>
         )}
-      </div>
+      </Card>
 
-      {/* 输入框 */}
-      <Card style={{ marginTop: 16 }}>
+      {/* 输入框 - 极简纯白风格 */}
+      <Card>
         {/* 截图预览区域 */}
         {pendingScreenshot && (
           <div
             style={{
-              marginBottom: 12,
-              padding: 12,
-              background: '#f5f5f5',
-              borderRadius: 8,
+              marginBottom: 16,
+              padding: 14,
+              background: '#FAFAFA',
+              border: '1px solid #E8E8E8',
+              borderRadius: 10,
               display: 'flex',
               alignItems: 'center',
-              gap: 12,
+              gap: 14,
             }}
           >
             <img
@@ -346,22 +332,25 @@ export default function ChatInterface() {
                 width: 80,
                 height: 60,
                 objectFit: 'cover',
-                borderRadius: 4,
-                border: '1px solid #d9d9d9',
+                borderRadius: 6,
+                border: '1px solid #E8E8E8',
               }}
             />
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 500, marginBottom: 4 }}>截图已添加</div>
-              <div style={{ fontSize: 12, color: '#8c8c8c' }}>
+              <div style={{ fontWeight: 500, marginBottom: 4, color: '#1A1A1A' }}>截图已添加</div>
+              <div style={{ fontSize: 12, color: '#8A8A8A', fontWeight: 400 }}>
                 请在下方输入问题后点击发送
               </div>
             </div>
             <Button
               size="small"
-              danger
               onClick={() => {
                 setPendingScreenshot(null);
                 message.info('已取消截图');
+              }}
+              style={{
+                borderRadius: 6,
+                fontWeight: 500,
               }}
             >
               取消
@@ -397,7 +386,7 @@ export default function ChatInterface() {
   );
 }
 
-// 消息气泡组件
+// 消息气泡组件 - 极简纯白风格
 function MessageBubble({ message }: { message: MessageType }) {
   const isUser = message.role === 'user';
   const isStreaming = message.status === 'streaming';
@@ -407,30 +396,34 @@ function MessageBubble({ message }: { message: MessageType }) {
       style={{
         display: 'flex',
         justifyContent: isUser ? 'flex-end' : 'flex-start',
-        marginBottom: 16,
+        marginBottom: 14,
       }}
     >
       <div
         style={{
-          maxWidth: '70%',
-          padding: '12px 16px',
-          borderRadius: 12,
-          background: isUser ? '#1890ff' : '#f5f5f5',
-          color: isUser ? '#fff' : '#000',
+          maxWidth: '88%',
+          padding: '12px 14px',
+          borderRadius: 10,
+          background: isUser ? '#1A1A1A' : '#FAFAFA',
+          border: isUser ? 'none' : '1px solid #E8E8E8',
+          color: isUser ? '#FFFFFF' : '#2A2A2A',
+          fontWeight: 400,
+          lineHeight: 1.5,
         }}
       >
         {/* 截图附件 */}
         {message.attachments?.map((att) =>
           att.type === 'screenshot' ? (
-            <div key={att.id} style={{ marginBottom: 8 }}>
+            <div key={att.id} style={{ marginBottom: 12 }}>
               <img
                 src={att.url}
                 alt="上传的截图"
                 style={{
                   maxWidth: '100%',
                   maxHeight: 300,
-                  borderRadius: 8,
+                  borderRadius: 10,
                   display: 'block',
+                  border: '1px solid #E8E8E8',
                 }}
               />
             </div>
@@ -438,7 +431,7 @@ function MessageBubble({ message }: { message: MessageType }) {
         )}
 
         {/* 消息内容（支持 Markdown） */}
-        <div className="markdown" style={{ whiteSpace: 'pre-wrap' }}>
+        <div className="markdown" style={{ whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
           {message.content}
         </div>
 
@@ -508,3 +501,53 @@ async function compressImage(
     img.src = URL.createObjectURL(file);
   });
 }
+
+// 新建会话按钮组件
+function NewSessionButton() {
+  const { message } = App.useApp();
+
+  const handleNewSession = async () => {
+    try {
+      const newSessionId = await sessionManager.createSession();
+      // 更新 localStorage 中的当前会话 ID
+      localStorage.setItem('currentSessionId', newSessionId);
+      // 触发自定义事件通知其他组件重新加载会话
+      window.dispatchEvent(new CustomEvent('sessionCreated', { detail: { sessionId: newSessionId } }));
+      message.success('已创建新会话');
+    } catch (error) {
+      console.error('创建会话失败:', error);
+      message.error('创建会话失败');
+    }
+  };
+
+  return (
+    <Button
+      onClick={handleNewSession}
+      style={{
+        padding: '10px 20px',
+        border: '1px solid #E8E8E8',
+        borderRadius: 8,
+        background: 'transparent',
+        color: '#8A8A8A',
+        fontSize: 14,
+        fontWeight: 500,
+        whiteSpace: 'nowrap',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = '#1A1A1A';
+        e.currentTarget.style.color = '#1A1A1A';
+        e.currentTarget.style.background = '#FAFAFA';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = '#E8E8E8';
+        e.currentTarget.style.color = '#8A8A8A';
+        e.currentTarget.style.background = 'transparent';
+      }}
+    >
+      新建会话
+    </Button>
+  );
+}
+
+// 导出 NewSessionButton 组件
+export { NewSessionButton };

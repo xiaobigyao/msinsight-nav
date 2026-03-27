@@ -1,8 +1,8 @@
 'use client';
 
 import { Layout } from 'antd';
-import { PictureOutlined } from '@ant-design/icons';
 import dynamic from 'next/dynamic';
+import { NewSessionButton } from '@/components/ChatInterface';
 
 // 动态导入客户端组件
 const ChatInterface = dynamic(() => import('@/components/ChatInterface'), {
@@ -17,29 +17,46 @@ const ChatInterface = dynamic(() => import('@/components/ChatInterface'), {
 
 export default function HomePage() {
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      {/* 顶部导航栏 */}
+    <Layout style={{ minHeight: '100vh', background: '#FFFFFF' }}>
+      {/* 顶部导航栏 - 极简纯白风格 */}
       <Layout.Header
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          background: '#fff',
-          borderBottom: '1px solid #f0f0f0',
-          padding: '0 24px',
+          justifyContent: 'center',
+          background: '#FFFFFF',
+          borderBottom: 'none',
+          padding: '100px 24px 80px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <PictureOutlined style={{ fontSize: 24, color: '#1890ff' }} />
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 18 }}>MindStudio Insight</div>
-            <div style={{ fontSize: 12, color: '#8c8c8c' }}>智能性能分析助手</div>
+        {/* 标题和新建会话按钮在同一行 */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 40,
+        }}>
+          <div style={{
+            fontWeight: 500,
+            fontSize: 56,
+            color: '#1A1A1A',
+            letterSpacing: '-1px',
+            lineHeight: 1,
+          }}>
+            MindStudio Insight 副驾驶员
           </div>
+          <NewSessionButton />
         </div>
       </Layout.Header>
 
       {/* 主内容区 */}
-      <Layout.Content style={{ background: '#f5f5f5' }}>
+      <Layout.Content style={{
+        background: '#FFFFFF',
+        padding: '0 40px',
+        paddingBottom: 80,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}>
         <ChatInterface />
       </Layout.Content>
     </Layout>
