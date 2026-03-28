@@ -18,7 +18,7 @@ echo ""
 # 获取脚本所在目录
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROCESSED_DIR="$SCRIPT_DIR/../processed"
-PUBLIC_DIR="$SCRIPT_DIR/../../public/knowledge"
+OUTPUT_DIR="$SCRIPT_DIR/../../src/data/knowledge"
 
 # 检查 Python 3
 if ! command -v python3 &> /dev/null; then
@@ -52,7 +52,7 @@ echo ""
 
 # 创建输出目录
 mkdir -p "$PROCESSED_DIR"
-mkdir -p "$PUBLIC_DIR"
+mkdir -p "$OUTPUT_DIR"
 
 # 步骤 1: 解析 Markdown
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -94,15 +94,24 @@ echo ""
 python3 "$SCRIPT_DIR/05_build_index.py"
 echo ""
 
-# 复制到 public 目录
+# 复制到 src/data/knowledge 目录（服务端使用，不暴露给客户端）
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "复制到 public 目录"
+echo -e "复制到 src/data/knowledge 目录"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-cp "$PROCESSED_DIR/chunks.json" "$PUBLIC_DIR/"
-cp "$PROCESSED_DIR/embeddings.npy" "$PUBLIC_DIR/"
-cp "$PROCESSED_DIR/metadata.json" "$PUBLIC_DIR/"
-echo -e "${GREEN}✓ 文件已复制到: $PUBLIC_DIR${NC}"
+cp "$PROCESSED_DIR/chunks.json" "$OUTPUT_DIR/"
+cp "$PROCESSED_DIR/metadata.json" "$OUTPUT_DIR/"
+
+# 将 .npy 转为 JSON（服务端 import 需要）
+echo "  转换 embeddings.npy → embeddings.json..."
+python3 -c "
+import numpy as np, json
+emb = np.load('$PROCESSED_DIR/embeddings.npy')
+json.dump(emb.tolist(), open('$OUTPUT_DIR/embeddings.json', 'w'))
+print(f'  ✓ 已转换: {emb.shape[0]} x {emb.shape[1]}')
+"
+
+echo -e "${GREEN}✓ 文件已复制到: $OUTPUT_DIR${NC}"
 echo ""
 
 # 生成统计信息
@@ -129,7 +138,7 @@ print()
 
 print("📁 输出文件：")
 print("  • chunks.json - 知识块内容")
-print("  • embeddings.npy - 向量索引")
+print("  • embeddings.json - 向量索引（JSON 格式）")
 print("  • metadata.json - 元数据索引")
 print()
 
@@ -140,7 +149,7 @@ EOF
 
 echo ""
 echo -e "${BLUE}下一步:${NC}"
-echo "  1. 将知识库文件部署到 public/knowledge/ 目录"
-echo "  2. 在前端代码中加载知识库"
-echo "  3. 实现向量检索功能"
+echo "  1. 知识库文件已部署到 src/data/knowledge/ 目录（服务端使用）"
+echo "  2. 服务端 API Route /api/knowledge/search 负责检索"
+echo "  3. 客户端不再加载知识库文件"
 echo ""
