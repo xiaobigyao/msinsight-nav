@@ -4,7 +4,7 @@
 
 ## 🌐 在线访问
 
-**生产环境**：https://msinsight-nav-g9i9uj3g1g.zh-cn.edgeone.cool
+**生产环境**：https://msinsight-nav-dt8zoa2mzl.zh-cn.edgeone.cool/
 
 ## ✨ 主要功能
 
@@ -19,7 +19,7 @@
 
 ### 在线使用
 
-直接访问 [https://msinsight-nav-g9i9uj3g1g.zh-cn.edgeone.cool](https://msinsight-nav-g9i9uj3g1g.zh-cn.edgeone.cool) 即可使用，无需安装。
+直接访问 [https://msinsight-nav-dt8zoa2mzl.zh-cn.edgeone.cool/](https://msinsight-nav-dt8zoa2mzl.zh-cn.edgeone.cool/) 即可使用，无需安装。
 
 ### 本地开发
 
